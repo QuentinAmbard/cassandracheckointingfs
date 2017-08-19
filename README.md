@@ -5,7 +5,8 @@ Allow faster checkpointing for structured streaming (<100ms)
 
 ![alt text](https://raw.githubusercontent.com/QuentinAmbard/cassandracheckointingfs/master/checkpointing-speed.png)
 
-##usage
+
+## usage
 
 Create C* table:
 
