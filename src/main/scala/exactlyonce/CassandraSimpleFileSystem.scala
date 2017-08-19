@@ -74,7 +74,6 @@ class CassandraSimpleFileSystem extends org.apache.hadoop.fs.FileSystem {
   }
 
   override def getFileStatus(p: Path): FileStatus = {
-    println(s"getstatus $p")
     val f = new Path(p.toUri.getPath)
     getFile(f) match {
       case None => null
@@ -83,10 +82,9 @@ class CassandraSimpleFileSystem extends org.apache.hadoop.fs.FileSystem {
   }
 
   override def mkdirs(p: Path, permission: FsPermission) = {
-    println(s"mkdir $p")
     val f = new Path(p.toUri.getPath)
     val batch = new BatchStatement()
-    if(p.isRoot){
+    if (p.isRoot) {
       session.get.execute(insertDirStatement.get.bind(Seq("/", "", true).asInstanceOf[Seq[Object]]: _*))
     } else {
       createParent(f.getParent, f.getName, batch)
@@ -98,7 +96,6 @@ class CassandraSimpleFileSystem extends org.apache.hadoop.fs.FileSystem {
   }
 
   override def rename(srcP: Path, dstP: Path): Boolean = {
-    println(s"rename $srcP $dstP")
     val src = new Path(srcP.toUri.getPath)
     val dst = new Path(dstP.toUri.getPath)
     getFile(src) match {
@@ -117,7 +114,6 @@ class CassandraSimpleFileSystem extends org.apache.hadoop.fs.FileSystem {
 
 
   override def open(p: Path, bufferSize: Int): FSDataInputStream = {
-    println(s"open $p")
     val f = new Path(p.toUri.getPath)
     val file = getFile(f)
     val bis = new SeekableByteArray(file.get.value.array())
@@ -125,7 +121,6 @@ class CassandraSimpleFileSystem extends org.apache.hadoop.fs.FileSystem {
   }
 
   override def listStatus(p: Path): Array[FileStatus] = {
-    println(s"liststatus $p")
     val f = new Path(p.toUri.getPath)
     session.get.execute(listStatement.get.bind(f.toString)).all().filter(r => !r.getString("name").isEmpty).map(r => {
       new FileStatus(r.getLong("length"), r.getBool("is_dir"), replication, 0, 0, new Path(r.getString("path"), r.getString("name")))
@@ -143,11 +138,11 @@ class CassandraSimpleFileSystem extends org.apache.hadoop.fs.FileSystem {
       }
     }
   }
+
   /**
     * In memory buffer, write to C* on close.
     */
   class COutputStream(path: Path) extends ByteArrayOutputStream {
-    val bos = new ByteArrayOutputStream()
     private var closed = false
 
     override def close(): Unit = {
@@ -172,7 +167,6 @@ class CassandraSimpleFileSystem extends org.apache.hadoop.fs.FileSystem {
   }
 
   override def create(p: Path, permission: FsPermission, overwrite: Boolean, bufferSize: Int, replication: Short, blockSize: Long, progress: Progressable): FSDataOutputStream = {
-    println(s"create $p")
     val f = new Path(p.toUri.getPath)
     new FSDataOutputStream(new COutputStream(f), null)
   }
@@ -186,17 +180,14 @@ class CassandraSimpleFileSystem extends org.apache.hadoop.fs.FileSystem {
 
   private def recursiveDelete(f: Path, batch: BatchStatement): Unit = {
     session.get.execute(listStatement.get.bind(f.toString)).all().foreach(r => {
-      if (r.getBool("is_dir")) {
-        if (!r.getString("name").isEmpty) {
-          recursiveDelete(new Path(r.getString("path"), r.getString("name")), batch)
-        }
+      if (r.getBool("is_dir") && !r.getString("name").isEmpty) {
+        recursiveDelete(new Path(r.getString("path"), r.getString("name")), batch)
       }
     })
     batch.add(deleteDirStatement.get.bind(f.toString))
   }
 
   override def delete(p: Path, recursive: Boolean): Boolean = {
-    println(s"delete $p")
     val f = new Path(p.toUri.getPath)
     getFile(f) match {
       case None => false
@@ -218,7 +209,6 @@ class CassandraSimpleFileSystem extends org.apache.hadoop.fs.FileSystem {
   }
 
   override def append(p: Path, bufferSize: Int, progress: Progressable): FSDataOutputStream = {
-    println(s"append $p")
     val f = new Path(p.toUri.getPath)
     getFile(f) match {
       case None => null
