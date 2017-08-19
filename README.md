@@ -3,7 +3,7 @@
 Example of an implementation of hadoop FileSystem on Cassandra.
 Allow faster checkpointing for structured streaming (<100ms) 
 
-![alt text](https://github.com/QuentinAmbard/cassandracheckointingfs/checkpointing-speed.png)
+![alt text](https://raw.githubusercontent.com/QuentinAmbard/cassandracheckointingfs/master/checkpointing-speed.png)
 
 ##usage
 
